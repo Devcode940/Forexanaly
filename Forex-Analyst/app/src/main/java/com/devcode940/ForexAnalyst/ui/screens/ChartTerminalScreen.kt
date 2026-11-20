@@ -88,6 +88,14 @@ fun ChartTerminalScreen(
                             coroutineScope.launch { drawerState.close() }
                         }
                     )
+                    NavigationDrawerItem(
+                        label = { Text("API Key Settings") },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                            showApiKeysDialog = true
+                        }
+                    )
                 }
                 WaitlistSidebar(onClose = { coroutineScope.launch { drawerState.close() } })
             }
@@ -102,6 +110,58 @@ fun ChartTerminalScreen(
             var showPracticeBanner by remember { mutableStateOf(true) }
             var showGlossaryDialog by remember { mutableStateOf(false) }
             var showNotificationsDialog by remember { mutableStateOf(false) }
+            var showApiKeysDialog by remember { mutableStateOf(false) }
+            if (showApiKeysDialog) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val keyManager = remember {
+                    com.devcode940.ForexAnalyst.data.security.SecureApiKeyManager.getInstance(context)
+                }
+                var openRouterInput by remember { mutableStateOf("") }
+                var fcsInput by remember { mutableStateOf("") }
+                var alphaInput by remember { mutableStateOf("") }
+                AlertDialog(
+                    onDismissRequest = { showApiKeysDialog = false },
+                    title = { Text("API Key Settings", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Keys are stored encrypted on-device via Android Keystore.", fontSize = 11.sp)
+                            OutlinedTextField(
+                                value = openRouterInput,
+                                onValueChange = { openRouterInput = it },
+                                label = { Text("OpenRouter API Key") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = fcsInput,
+                                onValueChange = { fcsInput = it },
+                                label = { Text("FCS API Key") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = alphaInput,
+                                onValueChange = { alphaInput = it },
+                                label = { Text("Alpha Vantage API Key") },
+                                singleLine = true
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            if (openRouterInput.isNotBlank()) keyManager.saveOpenRouterApiKey(openRouterInput.trim())
+                            if (fcsInput.isNotBlank()) keyManager.saveFcsApiKey(fcsInput.trim())
+                            if (alphaInput.isNotBlank()) keyManager.saveAlphaVantageApiKey(alphaInput.trim())
+                            showApiKeysDialog = false
+                        }) {
+                            Text("Save")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showApiKeysDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
             if (showNotificationsDialog) {
                 AlertDialog(
                     onDismissRequest = { showNotificationsDialog = false },

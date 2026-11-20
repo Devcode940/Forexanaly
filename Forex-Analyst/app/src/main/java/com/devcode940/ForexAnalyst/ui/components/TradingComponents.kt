@@ -475,10 +475,10 @@ fun SignalCard(
                     shape = RoundedCornerShape(6.dp)
                 ) {
                     Text(
-                        text = "R:R Ratio 1:${String.format(Locale.US, "%.1f", signal.riskRewardRatio)}",
+                        text = "MTF: 5M • 1H • 4H • 1D | R:R 1:${String.format(Locale.US, "%.1f", signal.riskRewardRatio)}",
                         color = Color(0xFFF59E0B),
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
