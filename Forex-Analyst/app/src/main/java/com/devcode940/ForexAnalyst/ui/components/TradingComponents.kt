@@ -486,6 +486,51 @@ fun SignalCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            var showWhy by remember { mutableStateOf(false) }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                TextButton(
+                    onClick = { showWhy = !showWhy },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text(
+                        text = if (showWhy) "Hide Beginner Breakdown ▲" else "Why This Signal? (Beginner Breakdown) ▼",
+                        color = Color(0xFF38BDF8),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                if (showWhy) {
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.background,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "• Direction: ${signal.type.name} setup based on ${signal.timeframeLabel} structure.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                text = "• Risk Protection: Stop Loss limits your loss if price moves against you; Take Profit locks in gains.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                text = "• Rationale: ${signal.summaryRationale}",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween

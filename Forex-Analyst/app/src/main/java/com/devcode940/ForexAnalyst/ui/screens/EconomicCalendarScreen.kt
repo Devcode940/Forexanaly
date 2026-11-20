@@ -304,6 +304,23 @@ private fun EconomicEventCard(
                 )
             )
 
+            if (event.impact == ImpactLevel.HIGH) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFEF4444).copy(alpha = 0.1f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Beginner Tip: High volatility expected. Consider avoiding new trades 15 min before/after this release.",
+                        fontSize = 11.sp,
+                        color = Color(0xFFEF4444),
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(10.dp))
 
             // Data Metrics Row: Actual | Forecast | Previous

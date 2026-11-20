@@ -88,6 +88,65 @@ fun ChartTerminalScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
+            var showPracticeBanner by remember { mutableStateOf(true) }
+            var showGlossaryDialog by remember { mutableStateOf(false) }
+            if (showGlossaryDialog) {
+                AlertDialog(
+                    onDismissRequest = { showGlossaryDialog = false },
+                    title = { Text("Beginner Trading Glossary", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("• Candlestick: Shows Open, High, Low, and Close price for one timeframe.", fontSize = 12.sp)
+                            Text("• Support & Resistance: Price zones where buying or selling pressure tends to pause or reverse.", fontSize = 12.sp)
+                            Text("• Fibonacci Retracement: Key pullback levels (38.2%, 50%, 61.8%) where trends often resume.", fontSize = 12.sp)
+                            Text("• Supply & Demand: Institutional order zones that cause sharp price moves.", fontSize = 12.sp)
+                            Text("• Market Structure: Higher highs/lows (uptrend) vs. lower highs/lows (downtrend).", fontSize = 12.sp)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showGlossaryDialog = false }) {
+                            Text("Close")
+                        }
+                    }
+                )
+            }
+            if (showPracticeBanner) {
+                Surface(
+                    color = Color(0xFF10B981).copy(alpha = 0.14f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("practice_mode_banner")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Practice Mode: Learn charting, indicators & risk safely ($10,000 virtual).",
+                            color = Color(0xFF10B981),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(
+                            onClick = { showGlossaryDialog = true },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                        ) {
+                            Text("Glossary", fontSize = 11.sp, color = Color(0xFF38BDF8))
+                        }
+                        TextButton(
+                            onClick = { showPracticeBanner = false },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                        ) {
+                            Text("Got it", fontSize = 11.sp, color = Color(0xFF10B981))
+                        }
+                    }
+                }
+            }
+
             // Theme Toggle, Auth, and Pair Selection (Top Bar)
             Row(
                 modifier = Modifier

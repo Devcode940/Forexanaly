@@ -60,6 +60,15 @@ fun AiAnalystScreen(
     }
 
     var inputPrompt by remember { mutableStateOf("") }
+    var beginnerMode by remember { mutableStateOf(false) }
+    val sendPrompt: (String) -> Unit = { raw ->
+        val finalPrompt = if (beginnerMode) {
+            "Explain in simple beginner-friendly terms without heavy jargon: $raw"
+        } else {
+            raw
+        }
+        viewModel.sendAiChatMessage(finalPrompt)
+    }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -164,6 +173,44 @@ fun AiAnalystScreen(
 
                     // Action buttons
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        FilterChip(
+                            selected = beginnerMode,
+                            onClick = { beginnerMode = !beginnerMode },
+                            label = { Text("Beginner", fontSize = 10.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFF10B981).copy(alpha = 0.25f),
+                                selectedLabelColor = Color(0xFF10B981),
+                                labelColor = Color(0xFF94A3B8)
+                            ),
+                            modifier = Modifier
+                                .height(30.dp)
+                                .testTag("chip_beginner_mode")
+                        )
+
+                        FilterChip(
+                            selected = false,
+                            onClick = {
+                                val recent = candles.takeLast(30)
+                                val swingHigh = recent.maxOfOrNull { it.high } ?: 0.0
+                                val swingLow = recent.minOfOrNull { it.low } ?: 0.0
+                                val lastClose = recent.lastOrNull()?.close ?: 0.0
+                                sendPrompt(
+                                    "Analyze market structure for ${selectedPair.symbol} ($selectedTimeframe): " +
+                                        "recent swing high=${String.format(Locale.US, "%.5f", swingHigh)}, " +
+                                        "swing low=${String.format(Locale.US, "%.5f", swingLow)}, " +
+                                        "current close=${String.format(Locale.US, "%.5f", lastClose)}. " +
+                                        "Identify trend direction, key support/resistance, and next likely move."
+                                )
+                            },
+                            label = { Text("Structure", fontSize = 10.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                labelColor = Color(0xFF38BDF8)
+                            ),
+                            modifier = Modifier
+                                .height(30.dp)
+                                .testTag("chip_analyze_structure")
+                        )
+
                         IconButton(
                             onClick = { viewModel.redrawChartWithAi() },
                             modifier = Modifier
@@ -382,7 +429,7 @@ fun AiAnalystScreen(
                 AiChatMessageBubble(
                     message = message,
                     onTriggerAction = { prompt ->
-                        viewModel.sendAiChatMessage(prompt)
+                        sendPrompt(prompt)
                     },
                     onTriggerRedraw = {
                         viewModel.redrawChartWithAi()
@@ -427,7 +474,7 @@ fun AiAnalystScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .clickable {
-                            viewModel.sendAiChatMessage(prompt)
+                            sendPrompt(prompt)
                         }
                 ) {
                     Text(
@@ -484,7 +531,7 @@ fun AiAnalystScreen(
                                 val text = inputPrompt
                                 inputPrompt = ""
                                 focusManager.clearFocus()
-                                viewModel.sendAiChatMessage(text)
+                                sendPrompt(text)
                             }
                         }
                     )
@@ -496,7 +543,7 @@ fun AiAnalystScreen(
                             val text = inputPrompt
                             inputPrompt = ""
                             focusManager.clearFocus()
-                            viewModel.sendAiChatMessage(text)
+                            sendPrompt(text)
                         }
                     },
                     enabled = inputPrompt.isNotBlank() && !isAnalyzing,
