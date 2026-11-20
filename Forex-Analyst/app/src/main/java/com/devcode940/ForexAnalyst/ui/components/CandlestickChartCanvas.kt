@@ -93,6 +93,8 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
+private const val TOUCH_HIT_TOLERANCE_PX = 44f
+
 enum class ChartDrawingTool {
     PAN_ZOOM,
     CROSSHAIR,

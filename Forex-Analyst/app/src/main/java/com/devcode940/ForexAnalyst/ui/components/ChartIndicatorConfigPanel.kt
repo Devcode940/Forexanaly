@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShowChart
@@ -512,51 +513,98 @@ private fun IndicatorRowItem(
     onCheckedChange: (Boolean) -> Unit,
     testTag: String
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .clickable { onCheckedChange(!checked) }
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    var showTip by remember { mutableStateOf(false) }
+    val beginnerTip = remember(title) {
+        when {
+            title.contains("EMA", ignoreCase = true) ->
+                "Exponential Moving Average smooths price data. Price above EMA suggests an uptrend; below suggests a downtrend."
+            title.contains("Bollinger", ignoreCase = true) ->
+                "Bands widen when volatility rises and squeeze when quiet. Touching upper/lower bands can signal overbought/oversold zones."
+            title.contains("RSI", ignoreCase = true) ->
+                "Measures momentum from 0–100. Above 70 is often overbought (potential pullback); below 30 is oversold (potential bounce)."
+            title.contains("Support", ignoreCase = true) || title.contains("Resistance", ignoreCase = true) ->
+                "Key price levels where buying (Support) or selling (Resistance) pressure has historically paused or reversed price."
+            title.contains("MACD", ignoreCase = true) ->
+                "Shows trend direction and momentum. When the MACD line crosses above the signal line, momentum is turning bullish."
+            else -> description
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(10.dp))
+                .clickable { onCheckedChange(!checked) }
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(badgeColor)
-            )
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 13.sp
-                    )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(badgeColor)
                 )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 10.sp
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 13.sp
+                        )
                     )
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 10.sp
+                        )
+                    )
+                }
+            }
+            IconButton(
+                onClick = { showTip = !showTip },
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Learn about $title",
+                    tint = if (showTip) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .testTag(testTag)
+            )
+        }
+        AnimatedVisibility(visible = showTip) {
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 30.dp, end = 8.dp, bottom = 6.dp)
+            ) {
+                Text(
+                    text = beginnerTip,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 15.sp,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier
-                .padding(start = 4.dp)
-                .testTag(testTag)
-        )
     }
 }
 

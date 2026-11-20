@@ -1215,4 +1215,42 @@ object TechnicalAnalysisEngine {
         }
     }
 
+    /**
+     * Returns true if [lineA] just crossed above [lineB] on the latest bar.
+     */
+    fun detectCrossUp(lineA: List<Double?>, lineB: List<Double?>): Boolean {
+        if (lineA.size < 2 || lineB.size < 2) return false
+        val prevA = lineA[lineA.size - 2] ?: return false
+        val prevB = lineB[lineB.size - 2] ?: return false
+        val currA = lineA.last() ?: return false
+        val currB = lineB.last() ?: return false
+        return prevA <= prevB && currA > currB
+    }
+
+    /**
+     * Returns true if [lineA] just crossed below [lineB] on the latest bar.
+     */
+    fun detectCrossDown(lineA: List<Double?>, lineB: List<Double?>): Boolean {
+        if (lineA.size < 2 || lineB.size < 2) return false
+        val prevA = lineA[lineA.size - 2] ?: return false
+        val prevB = lineB[lineB.size - 2] ?: return false
+        val currA = lineA.last() ?: return false
+        val currB = lineB.last() ?: return false
+        return prevA >= prevB && currA < currB
+    }
+
+    /**
+     * Projects a potential harmonic D-point target from 3 swing points (X, A, B)
+     * using classic Fibonacci retracement/extension ratios (0.786 Gartley, 0.886 Bat, 1.272 Butterfly).
+     */
+    fun projectHarmonicTarget(x: Double, a: Double, b: Double): Map<String, Double> {
+        val xaMove = a - x
+        if (xaMove == 0.0) return emptyMap()
+        return mapOf(
+            "Gartley (0.786)" to (a - xaMove * 0.786),
+            "Bat (0.886)" to (a - xaMove * 0.886),
+            "Butterfly (1.272)" to (a - xaMove * 1.272)
+        )
+    }
+
 }

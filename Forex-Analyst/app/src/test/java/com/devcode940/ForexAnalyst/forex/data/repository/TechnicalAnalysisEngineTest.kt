@@ -164,4 +164,25 @@ class TechnicalAnalysisEngineTest {
         val signal = TechnicalAnalysisEngine.generateTradeSignal(pair, candles, Timeframe.H1, settings)
         assertTrue(signal.rsiValue > 70.0) // faster RSI reacts harder to the uptrend
     }
+
+    @Test
+    fun `detectCrossUp and detectCrossDown identify latest bar crossovers`() {
+        val fastUp = listOf(1.0, 2.0, 4.0)
+        val slowUp = listOf(2.0, 2.5, 3.0)
+        assertTrue(TechnicalAnalysisEngine.detectCrossUp(fastUp, slowUp))
+        assertFalse(TechnicalAnalysisEngine.detectCrossDown(fastUp, slowUp))
+
+        val fastDown = listOf(4.0, 3.0, 1.5)
+        val slowDown = listOf(2.0, 2.5, 2.5)
+        assertTrue(TechnicalAnalysisEngine.detectCrossDown(fastDown, slowDown))
+        assertFalse(TechnicalAnalysisEngine.detectCrossUp(fastDown, slowDown))
+    }
+
+    @Test
+    fun `projectHarmonicTarget computes Gartley, Bat, and Butterfly D-points`() {
+        val targets = TechnicalAnalysisEngine.projectHarmonicTarget(x = 1.0000, a = 1.1000, b = 1.0500)
+        assertEquals(1.1000 - 0.1000 * 0.786, targets["Gartley (0.786)"]!!, 1e-6)
+        assertEquals(1.1000 - 0.1000 * 0.886, targets["Bat (0.886)"]!!, 1e-6)
+        assertEquals(1.1000 - 0.1000 * 1.272, targets["Butterfly (1.272)"]!!, 1e-6)
+    }
 }

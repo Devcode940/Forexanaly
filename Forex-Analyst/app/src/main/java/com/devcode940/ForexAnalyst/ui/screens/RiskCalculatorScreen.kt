@@ -206,5 +206,77 @@ fun RiskCalculatorScreen(
                 }
             }
         }
+
+        // Beginner 1%-2% Risk Rule Guardrail
+        val (ruleColor, ruleTitle, ruleDesc) = when {
+            riskPercent <= 2.0 -> Triple(
+                Color(0xFF10B981),
+                "Safe Risk Level (<= 2% Rule)",
+                "Great discipline! Risking 1%–2% per trade protects your account from losing streaks."
+            )
+            riskPercent <= 5.0 -> Triple(
+                Color(0xFFF59E0B),
+                "Elevated Risk (2%–5%)",
+                "Caution: Risking more than 2% per trade can draw down your account quickly."
+            )
+            else -> Triple(
+                Color(0xFFEF4444),
+                "High Risk Warning (> 5%)",
+                "Beginners should avoid risking over 5% on a single trade. Lower your risk % to protect your capital."
+            )
+        }
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = ruleColor.copy(alpha = 0.12f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("risk_guardrail_card")
+        ) {
+            Column(
+                modifier = Modifier.padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(ruleTitle, color = ruleColor, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                Text(ruleDesc, color = Color(0xFFCBD5E1), fontSize = 12.sp)
+            }
+        }
+
+        // Collapsible Beginner Guide: Pips & Lots
+        var showBeginnerGuide by remember { mutableStateOf(false) }
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "New to Forex? What are Pips & Lots?",
+                        color = Color(0xFF38BDF8),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    TextButton(onClick = { showBeginnerGuide = !showBeginnerGuide }) {
+                        Text(if (showBeginnerGuide) "Hide" else "Learn", color = Color(0xFF38BDF8))
+                    }
+                }
+                if (showBeginnerGuide) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "• Pip: The smallest standard price move (0.0001 on EUR/USD, 0.01 on USD/JPY).\n" +
+                            "• Standard Lot (1.00): 100,000 units (~$10 per pip on EUR/USD).\n" +
+                            "• Mini Lot (0.10): 10,000 units (~$1 per pip).\n" +
+                            "• Micro Lot (0.01): 1,000 units (~$0.10 per pip) — best for beginners.",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp
+                    )
+                }
+            }
+        }
     }
 }

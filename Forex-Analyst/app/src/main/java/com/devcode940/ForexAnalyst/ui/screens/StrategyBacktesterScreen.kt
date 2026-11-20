@@ -58,7 +58,7 @@ fun StrategyBacktesterScreen(
     val aiAuditSummary by viewModel.aiBacktestAudit.collectAsState()
     val isAuditingAi by viewModel.isAuditingBacktest.collectAsState()
 
-    LaunchedEffect(selectedStrategy) {
+        LaunchedEffect(selectedStrategy) {
         slPips = selectedStrategy.defaultSlPips.toFloat()
         tpPips = selectedStrategy.defaultTpPips.toFloat()
     }
@@ -71,6 +71,40 @@ fun StrategyBacktesterScreen(
             .verticalScroll(rememberScrollState())
             .testTag("strategy_backtester_screen")
     ) {
+        // Beginner Presets
+        Text(
+            text = "Beginner Quick Presets",
+            style = MaterialTheme.typography.labelMedium.copy(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AssistChip(
+                onClick = {
+                    selectedStrategy = BacktestStrategy.EMA_CROSSOVER
+                    riskPct = 1.0f
+                    slPips = 25f
+                    tpPips = 50f
+                },
+                label = { Text("Safe Trend (1% Risk)", fontSize = 11.sp) }
+            )
+            AssistChip(
+                onClick = {
+                    selectedStrategy = BacktestStrategy.entries.firstOrNull { it.name.contains("RSI", ignoreCase = true) }
+                        ?: BacktestStrategy.EMA_CROSSOVER
+                    riskPct = 1.5f
+                    slPips = 20f
+                    tpPips = 40f
+                },
+                label = { Text("RSI Bounce (1.5% Risk)", fontSize = 11.sp) }
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
         // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
