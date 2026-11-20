@@ -565,6 +565,42 @@ fun ChartTerminalScreen(
                     }
                 }
                 
+                // Landscape Pro Institutional Telemetry Panel
+                val isLandscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation ==
+                    android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                if (isLandscape && !showRightSidebar) {
+                    val structure = remember(candles) {
+                        com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine.analyzeMarketStructure(candles)
+                    }
+                    val sweep = remember(candles) {
+                        com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine.detectLiquiditySweep(candles)
+                    }
+                    Surface(
+                        modifier = Modifier
+                            .width(220.dp)
+                            .fillMaxHeight()
+                            .testTag("landscape_pro_panel"),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("PRO TELEMETRY", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                            HorizontalDivider()
+                            Text("Bias: ${structure.bias}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text("BOS: ${structure.breakOfStructure}", fontSize = 11.sp)
+                            Text("Zone: ${structure.zone}", fontSize = 11.sp, color = if (structure.zone == "DISCOUNT") Color(0xFF10B981) else Color(0xFFEF4444))
+                            Text("Equilibrium: ${String.format(java.util.Locale.US, "%.5f", structure.equilibrium)}", fontSize = 11.sp)
+                            Text("Sweep: $sweep", fontSize = 11.sp)
+                            Text("FVGs (30 bars): ${structure.fvgCount}", fontSize = 11.sp)
+                        }
+                    }
+                }
+
                 // Right Sidebar for Overlays & Customization
                 AnimatedVisibility(
                     visible = showRightSidebar,
