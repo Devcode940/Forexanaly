@@ -190,16 +190,15 @@ fun AiAnalystScreen(
                         FilterChip(
                             selected = false,
                             onClick = {
-                                val recent = candles.takeLast(30)
-                                val swingHigh = recent.maxOfOrNull { it.high } ?: 0.0
-                                val swingLow = recent.minOfOrNull { it.low } ?: 0.0
-                                val lastClose = recent.lastOrNull()?.close ?: 0.0
+                                val summary = com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine.analyzeMarketStructure(candles)
                                 sendPrompt(
-                                    "Analyze market structure for ${selectedPair.symbol} ($selectedTimeframe): " +
-                                        "recent swing high=${String.format(Locale.US, "%.5f", swingHigh)}, " +
-                                        "swing low=${String.format(Locale.US, "%.5f", swingLow)}, " +
-                                        "current close=${String.format(Locale.US, "%.5f", lastClose)}. " +
-                                        "Identify trend direction, key support/resistance, and next likely move."
+                                    "Analyze institutional market structure for ${selectedPair.symbol} ($selectedTimeframe): " +
+                                        "bias=${summary.bias}, BOS=${summary.breakOfStructure}, " +
+                                        "zone=${summary.zone} (equilibrium=${String.format(Locale.US, "%.5f", summary.equilibrium)}), " +
+                                        "swingHigh=${String.format(Locale.US, "%.5f", summary.swingHigh)}, " +
+                                        "swingLow=${String.format(Locale.US, "%.5f", summary.swingLow)}, " +
+                                        "FVGs=${summary.fvgCount}. " +
+                                        "Identify liquidity targets, key order blocks/S&R, and high-probability setups."
                                 )
                             },
                             label = { Text("Structure", fontSize = 10.sp) },

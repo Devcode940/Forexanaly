@@ -78,6 +78,17 @@ fun ChartTerminalScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Forex Analyst", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        label = { Text("Beginner Trading Glossary") },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                        }
+                    )
+                }
                 WaitlistSidebar(onClose = { coroutineScope.launch { drawerState.close() } })
             }
         },
@@ -90,6 +101,25 @@ fun ChartTerminalScreen(
         ) {
             var showPracticeBanner by remember { mutableStateOf(true) }
             var showGlossaryDialog by remember { mutableStateOf(false) }
+            var showNotificationsDialog by remember { mutableStateOf(false) }
+            if (showNotificationsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showNotificationsDialog = false },
+                    title = { Text("Notifications & News", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("• Price & RSI Alerts: Check the Alerts tab to manage active triggers.", fontSize = 12.sp)
+                            Text("• High-Impact News: Avoid entering new trades 15 min before/after NFP, CPI, or FOMC.", fontSize = 12.sp)
+                            Text("• Background Signals: SignalWorker scans markets periodically for high-confidence setups.", fontSize = 12.sp)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showNotificationsDialog = false }) {
+                            Text("Close")
+                        }
+                    }
+                )
+            }
             if (showGlossaryDialog) {
                 AlertDialog(
                     onDismissRequest = { showGlossaryDialog = false },
@@ -124,8 +154,17 @@ fun ChartTerminalScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val utcHour = remember {
+                            java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                                .get(java.util.Calendar.HOUR_OF_DAY)
+                        }
+                        val sessionLabel = remember(utcHour) {
+                            com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine
+                                .currentTradingSessionUtc(utcHour)
+                                .replace("_", " ")
+                        }
                         Text(
-                            text = "Practice Mode: Learn charting, indicators & risk safely ($10,000 virtual).",
+                            text = "Practice Mode ($sessionLabel)",
                             color = Color(0xFF10B981),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
@@ -159,6 +198,13 @@ fun ChartTerminalScreen(
                     modifier = Modifier.testTag("open_sidebar_btn")
                 ) {
                     Icon(imageVector = Icons.Default.Menu, contentDescription = "Menu")
+                }
+
+                IconButton(
+                    onClick = { showNotificationsDialog = true },
+                    modifier = Modifier.testTag("open_notifications_btn")
+                ) {
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications")
                 }
 
                 Box(modifier = Modifier.weight(1f)) {

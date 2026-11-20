@@ -185,4 +185,35 @@ class TechnicalAnalysisEngineTest {
         assertEquals(1.1000 - 0.1000 * 0.886, targets["Bat (0.886)"]!!, 1e-6)
         assertEquals(1.1000 - 0.1000 * 1.272, targets["Butterfly (1.272)"]!!, 1e-6)
     }
+
+    @Test
+    fun `analyzeMarketStructure identifies bullish structure and equilibrium`() {
+        val candles = trendSeries(30, 1.0800, 0.0004, 0.0006)
+        val summary = TechnicalAnalysisEngine.analyzeMarketStructure(candles)
+        assertEquals("BULLISH_STRUCTURE", summary.bias)
+        assertEquals("PREMIUM", summary.zone)
+        assertEquals("BULLISH_BOS", summary.breakOfStructure)
+    }
+
+    @Test
+    fun `currentTradingSessionUtc classifies London Killzone and NY Overlap`() {
+        assertEquals("LONDON_KILLZONE", TechnicalAnalysisEngine.currentTradingSessionUtc(8))
+        assertEquals("LONDON_NY_OVERLAP", TechnicalAnalysisEngine.currentTradingSessionUtc(13))
+        assertEquals("ASIAN_SESSION", TechnicalAnalysisEngine.currentTradingSessionUtc(3))
+    }
+
+    @Test
+    fun `detectLiquiditySweep identifies buy-side and sell-side sweeps`() {
+        val base = trendSeries(10, 1.0800, 0.0001, 0.0002)
+        val priorHigh = base.maxOf { it.high }
+        val sweepHigh = base + CandleStick(
+            timestamp = base.last().timestamp + 3600_000L,
+            open = priorHigh - 0.0002,
+            high = priorHigh + 0.0010,
+            low = priorHigh - 0.0003,
+            close = priorHigh - 0.0001,
+            volume = 100.0
+        )
+        assertEquals("BUY_SIDE_SWEEP", TechnicalAnalysisEngine.detectLiquiditySweep(sweepHigh))
+    }
 }
