@@ -78,6 +78,25 @@ fun ChartTerminalScreen(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Forex Analyst", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    HorizontalDivider()
+                    NavigationDrawerItem(
+                        label = { Text("Beginner Trading Glossary") },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                        }
+                    )
+                    NavigationDrawerItem(
+                        label = { Text("API Key Settings") },
+                        selected = false,
+                        onClick = {
+                            coroutineScope.launch { drawerState.close() }
+                            showApiKeysDialog = true
+                        }
+                    )
+                }
                 WaitlistSidebar(onClose = { coroutineScope.launch { drawerState.close() } })
             }
         },
@@ -90,6 +109,77 @@ fun ChartTerminalScreen(
         ) {
             var showPracticeBanner by remember { mutableStateOf(true) }
             var showGlossaryDialog by remember { mutableStateOf(false) }
+            var showNotificationsDialog by remember { mutableStateOf(false) }
+            var showApiKeysDialog by remember { mutableStateOf(false) }
+            if (showApiKeysDialog) {
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val keyManager = remember {
+                    com.devcode940.ForexAnalyst.data.security.SecureApiKeyManager.getInstance(context)
+                }
+                var openRouterInput by remember { mutableStateOf("") }
+                var fcsInput by remember { mutableStateOf("") }
+                var alphaInput by remember { mutableStateOf("") }
+                AlertDialog(
+                    onDismissRequest = { showApiKeysDialog = false },
+                    title = { Text("API Key Settings", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Keys are stored encrypted on-device via Android Keystore.", fontSize = 11.sp)
+                            OutlinedTextField(
+                                value = openRouterInput,
+                                onValueChange = { openRouterInput = it },
+                                label = { Text("OpenRouter API Key") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = fcsInput,
+                                onValueChange = { fcsInput = it },
+                                label = { Text("FCS API Key") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = alphaInput,
+                                onValueChange = { alphaInput = it },
+                                label = { Text("Alpha Vantage API Key") },
+                                singleLine = true
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            if (openRouterInput.isNotBlank()) keyManager.saveOpenRouterApiKey(openRouterInput.trim())
+                            if (fcsInput.isNotBlank()) keyManager.saveFcsApiKey(fcsInput.trim())
+                            if (alphaInput.isNotBlank()) keyManager.saveAlphaVantageApiKey(alphaInput.trim())
+                            showApiKeysDialog = false
+                        }) {
+                            Text("Save")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showApiKeysDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
+            }
+            if (showNotificationsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showNotificationsDialog = false },
+                    title = { Text("Notifications & News", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("• Price & RSI Alerts: Check the Alerts tab to manage active triggers.", fontSize = 12.sp)
+                            Text("• High-Impact News: Avoid entering new trades 15 min before/after NFP, CPI, or FOMC.", fontSize = 12.sp)
+                            Text("• Background Signals: SignalWorker scans markets periodically for high-confidence setups.", fontSize = 12.sp)
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showNotificationsDialog = false }) {
+                            Text("Close")
+                        }
+                    }
+                )
+            }
             if (showGlossaryDialog) {
                 AlertDialog(
                     onDismissRequest = { showGlossaryDialog = false },
@@ -124,8 +214,17 @@ fun ChartTerminalScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        val utcHour = remember {
+                            java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+                                .get(java.util.Calendar.HOUR_OF_DAY)
+                        }
+                        val sessionLabel = remember(utcHour) {
+                            com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine
+                                .currentTradingSessionUtc(utcHour)
+                                .replace("_", " ")
+                        }
                         Text(
-                            text = "Practice Mode: Learn charting, indicators & risk safely ($10,000 virtual).",
+                            text = "Practice Mode ($sessionLabel)",
                             color = Color(0xFF10B981),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
@@ -159,6 +258,13 @@ fun ChartTerminalScreen(
                     modifier = Modifier.testTag("open_sidebar_btn")
                 ) {
                     Icon(imageVector = Icons.Default.Menu, contentDescription = "Menu")
+                }
+
+                IconButton(
+                    onClick = { showNotificationsDialog = true },
+                    modifier = Modifier.testTag("open_notifications_btn")
+                ) {
+                    Icon(imageVector = Icons.Default.Notifications, contentDescription = "Notifications")
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
@@ -459,6 +565,42 @@ fun ChartTerminalScreen(
                     }
                 }
                 
+                // Landscape Pro Institutional Telemetry Panel
+                val isLandscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation ==
+                    android.content.res.Configuration.ORIENTATION_LANDSCAPE
+                if (isLandscape && !showRightSidebar) {
+                    val structure = remember(candles) {
+                        com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine.analyzeMarketStructure(candles)
+                    }
+                    val sweep = remember(candles) {
+                        com.devcode940.ForexAnalyst.data.repository.TechnicalAnalysisEngine.detectLiquiditySweep(candles)
+                    }
+                    Surface(
+                        modifier = Modifier
+                            .width(220.dp)
+                            .fillMaxHeight()
+                            .testTag("landscape_pro_panel"),
+                        color = MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("PRO TELEMETRY", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                            HorizontalDivider()
+                            Text("Bias: ${structure.bias}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            Text("BOS: ${structure.breakOfStructure}", fontSize = 11.sp)
+                            Text("Zone: ${structure.zone}", fontSize = 11.sp, color = if (structure.zone == "DISCOUNT") Color(0xFF10B981) else Color(0xFFEF4444))
+                            Text("Equilibrium: ${String.format(java.util.Locale.US, "%.5f", structure.equilibrium)}", fontSize = 11.sp)
+                            Text("Sweep: $sweep", fontSize = 11.sp)
+                            Text("FVGs (30 bars): ${structure.fvgCount}", fontSize = 11.sp)
+                        }
+                    }
+                }
+
                 // Right Sidebar for Overlays & Customization
                 AnimatedVisibility(
                     visible = showRightSidebar,

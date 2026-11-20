@@ -1253,4 +1253,117 @@ object TechnicalAnalysisEngine {
         )
     }
 
+    data class MarketStructureSummary(
+        val bias: String,
+        val swingHigh: Double,
+        val swingLow: Double,
+        val equilibrium: Double,
+        val zone: String,
+        val breakOfStructure: String,
+        val fvgCount: Int
+    )
+
+    /**
+     * Analyzes institutional market structure: swing highs/lows, 50% equilibrium,
+     * Premium/Discount zone, Break of Structure (BOS), and Fair Value Gaps (FVG).
+     */
+    fun analyzeMarketStructure(candles: List<CandleStick>, lookback: Int = 30): MarketStructureSummary {
+        if (candles.size < 5) {
+            val last = candles.lastOrNull()?.close ?: 0.0
+            return MarketStructureSummary("NEUTRAL", last, last, last, "EQUILIBRIUM", "NONE", 0)
+        }
+        val window = candles.takeLast(lookback)
+        val swingHigh = window.maxOf { it.high }
+        val swingLow = window.minOf { it.low }
+        val equilibrium = (swingHigh + swingLow) / 2.0
+        val lastClose = window.last().close
+
+        val zone = when {
+            lastClose > equilibrium -> "PREMIUM"
+            lastClose < equilibrium -> "DISCOUNT"
+            else -> "EQUILIBRIUM"
+        }
+
+        val mid = window.size / 2
+        val firstHalfHigh = window.take(mid).maxOf { it.high }
+        val secondHalfHigh = window.drop(mid).maxOf { it.high }
+        val firstHalfLow = window.take(mid).minOf { it.low }
+        val secondHalfLow = window.drop(mid).minOf { it.low }
+
+        val bias = when {
+            secondHalfHigh > firstHalfHigh && secondHalfLow >= firstHalfLow -> "BULLISH_STRUCTURE"
+            secondHalfLow < firstHalfLow && secondHalfHigh <= firstHalfHigh -> "BEARISH_STRUCTURE"
+            else -> "RANGING"
+        }
+
+        val bos = when {
+            lastClose > firstHalfHigh -> "BULLISH_BOS"
+            lastClose < firstHalfLow -> "BEARISH_BOS"
+            else -> "NONE"
+        }
+
+        val fvgCount = detectFairValueGaps(window).size
+
+        return MarketStructureSummary(
+            bias = bias,
+            swingHigh = swingHigh,
+            swingLow = swingLow,
+            equilibrium = equilibrium,
+            zone = zone,
+            breakOfStructure = bos,
+            fvgCount = fvgCount
+        )
+    }
+
+    /**
+     * Detects 3-candle institutional Fair Value Gaps (imbalances) in [candles].
+     * Returns pairs of (type, midpointPrice).
+     */
+    fun detectFairValueGaps(candles: List<CandleStick>): List<Pair<String, Double>> {
+        if (candles.size < 3) return emptyList()
+        val gaps = mutableListOf<Pair<String, Double>>()
+        for (i in 2 until candles.size) {
+            val c0 = candles[i - 2]
+            val c2 = candles[i]
+            if (c2.low > c0.high) {
+                gaps.add("BULLISH_FVG" to ((c2.low + c0.high) / 2.0))
+            } else if (c2.high < c0.low) {
+                gaps.add("BEARISH_FVG" to ((c2.high + c0.low) / 2.0))
+            }
+        }
+        return gaps
+    }
+
+    /**
+     * Classifies the current UTC hour into major Forex liquidity sessions.
+     */
+    fun currentTradingSessionUtc(hourUtc: Int): String {
+        return when (hourUtc) {
+            in 0..6 -> "ASIAN_SESSION"
+            in 7..11 -> "LONDON_KILLZONE"
+            in 12..15 -> "LONDON_NY_OVERLAP"
+            in 16..20 -> "NEW_YORK_SESSION"
+            else -> "OFF_SESSION"
+        }
+    }
+
+    /**
+     * Detects a liquidity sweep on the latest candle:
+     * - "BUY_SIDE_SWEEP" if price wicked above prior swing high but closed back below it.
+     * - "SELL_SIDE_SWEEP" if price wicked below prior swing low but closed back above it.
+     */
+    fun detectLiquiditySweep(candles: List<CandleStick>, lookback: Int = 20): String {
+        if (candles.size < 4) return "NONE"
+        val prior = candles.dropLast(1).takeLast(lookback)
+        val last = candles.last()
+        val priorHigh = prior.maxOf { it.high }
+        val priorLow = prior.minOf { it.low }
+
+        return when {
+            last.high > priorHigh && last.close < priorHigh -> "BUY_SIDE_SWEEP"
+            last.low < priorLow && last.close > priorLow -> "SELL_SIDE_SWEEP"
+            else -> "NONE"
+        }
+    }
+
 }
